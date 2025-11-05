@@ -3,4 +3,3 @@ test-results/
 playwright-report/
 screenshots/
 .DS_Store
-package-lock.json
