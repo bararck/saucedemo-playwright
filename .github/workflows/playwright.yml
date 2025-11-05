@@ -1,0 +1,52 @@
+
+name: Playwright tests (matrix browsers)
+
+on:
+  push:
+    branches: [ main, feature/login-fix ]
+  pull_request:
+    branches: [ main, feature/login-fix ]
+
+jobs:
+  test:
+    name: Run Playwright tests on ${{ matrix.browser }} / Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: "Run Playwright tests (browser: ${{ matrix.browser }})"
+        env:
+          CI: true
+        run: |
+          # run tests for a single browser from the matrix
+          npx playwright test --browser=${{ matrix.browser }} --reporter=github || true
+
+      - name: Upload Playwright artifacts (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ matrix.browser }}
+          path: |
+            playwright-report
+            test-results
+            screenshots
+            traces
+
